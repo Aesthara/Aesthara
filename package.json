@@ -7,7 +7,7 @@
     "dev": "vite --open",
     "build:skip-bindings": "vite build && npm run copy:env",
     "build": "vite build && npm run copy:env",
-    "copy:env": "copy env.json dist\\",
+    "copy:env": "node -e \"require('fs').copyFileSync('env.json', 'dist/env.json')\"",
     "typecheck": "tsc --noEmit --incremental --tsBuildInfoFile node_modules/.cache/tsconfig.tsbuildinfo --pretty",
     "check": "biome check src",
     "fix": "biome check --write src"
