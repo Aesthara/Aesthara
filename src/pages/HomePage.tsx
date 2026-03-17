@@ -194,6 +194,8 @@ const floatingDots = [
   { left: "96%", top: "75%", color: "rgba(255,255,255,0.5)", delay: "2.6s" },
 ];
 
+const sectionSubtitleClassName = "text-lg text-gray-600 italic";
+
 export default function HomePage() {
   const [heroLeftVisible, setHeroLeftVisible] = useState(false);
   const [heroRightVisible, setHeroRightVisible] = useState(false);
@@ -307,18 +309,19 @@ export default function HomePage() {
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16 grid lg:grid-cols-2 gap-12 lg:gap-8 items-center w-full">
           {/* Left text */}
           <div
+            className="overflow-visible"
             style={{
               opacity: heroLeftVisible ? 1 : 0,
               transform: heroLeftVisible ? "translateY(0)" : "translateY(40px)",
               transition: "all 0.7s ease-out",
             }}
           >
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-[1.3] tracking-tight text-white mb-8">
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#DF9F57] via-[#FFC32E] to-[#DF9F57]">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight tracking-tight text-white mb-8">
+              <span className="block leading-[1.2] pb-3 text-transparent bg-clip-text bg-gradient-to-r from-[#DF9F57] via-[#FFC32E] to-[#DF9F57] mb-2">
                 Elevating Brands
               </span>
-              <br />
-              Through Visual Excellence
+              <span className="block mb-4">Through Visual</span>
+              <span className="block">Excellence</span>
             </h1>
             <p className="text-xl sm:text-2xl text-white/80 leading-relaxed max-w-xl mx-auto lg:mx-0 mb-8 font-medium">
               Transforming Ideas into Impactful Visual Stories
@@ -556,7 +559,7 @@ export default function HomePage() {
               }}
             >
               <div className="flex-1 order-2 lg:order-1">
-                <h3 className="text-2xl sm:text-3xl font-bold leading-[1.3] text-transparent bg-clip-text bg-gradient-to-r from-[#005280] to-[#DF9F57] mb-6">
+                <h3 className="text-2xl sm:text-3xl font-bold leading-[1.6] pb-1 text-transparent bg-clip-text bg-gradient-to-r from-[#005280] to-[#DF9F57] mb-6">
                   Presentation Design
                 </h3>
                 <p className="text-gray-600 mb-2">
@@ -615,7 +618,7 @@ export default function HomePage() {
               }}
             >
               <div className="flex-1">
-                <h3 className="text-2xl sm:text-3xl font-bold leading-[1.3] text-transparent bg-clip-text bg-gradient-to-r from-[#005280] to-[#DF9F57] mb-6">
+                <h3 className="text-2xl sm:text-3xl font-bold leading-[1.6] pb-1 text-transparent bg-clip-text bg-gradient-to-r from-[#005280] to-[#DF9F57] mb-6">
                   Graphic &amp; Visual Design
                 </h3>
                 <p className="text-gray-600 mb-2">
@@ -671,7 +674,7 @@ export default function HomePage() {
               }}
             >
               <div className="flex-1 order-2 lg:order-1">
-                <h3 className="text-2xl sm:text-3xl font-bold leading-[1.3] text-transparent bg-clip-text bg-gradient-to-r from-[#005280] to-[#DF9F57] mb-6">
+                <h3 className="text-2xl sm:text-3xl font-bold leading-[1.6] pb-1 text-transparent bg-clip-text bg-gradient-to-r from-[#005280] to-[#DF9F57] mb-6">
                   Branding
                 </h3>
                 <p className="text-gray-600 mb-2">
@@ -802,9 +805,7 @@ export default function HomePage() {
             <h2 className="text-4xl sm:text-5xl font-bold text-[#094185] mb-4">
               A Four-Step Journey
             </h2>
-            <p className="text-lg text-gray-600 italic">
-              From insight to impact.
-            </p>
+            <p className={sectionSubtitleClassName}>From insight to impact.</p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {steps.map((step, idx) => (
@@ -904,6 +905,9 @@ export default function HomePage() {
             <h2 className="text-4xl sm:text-5xl font-bold text-[#094185] mb-3">
               Clients Served
             </h2>
+            <p className={sectionSubtitleClassName}>
+              Trusted by Leading Companies
+            </p>
           </div>
 
           <div className="flex flex-wrap justify-center items-center gap-8">

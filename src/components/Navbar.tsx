@@ -43,11 +43,11 @@ export default function Navbar() {
     ? scrolled
       ? "bg-[#005280]/90 backdrop-blur-md shadow-md"
       : "bg-transparent"
-    : "bg-white/95 backdrop-blur-md shadow-sm";
+    : "bg-[#005280]/95 backdrop-blur-md shadow-sm";
 
   const linkClass = isTransparent
     ? "px-4 py-2 text-sm font-medium transition-colors rounded-lg text-white/70 hover:text-white hover:bg-white/5"
-    : "px-4 py-2 text-sm font-medium transition-colors rounded-lg text-[#094185]/70 hover:text-[#094185] hover:bg-[#094185]/5";
+    : "px-4 py-2 text-sm font-medium transition-colors rounded-lg text-white/80 hover:text-white hover:bg-white/10";
 
   return (
     <nav
@@ -132,7 +132,7 @@ export default function Navbar() {
 
       {mobileOpen && (
         <div
-          className={`lg:hidden ${isTransparent ? "bg-[#005280]/95" : "bg-white"} border-t ${isTransparent ? "border-white/10" : "border-gray-100"} backdrop-blur-md`}
+          className="lg:hidden bg-[#005280]/95 border-t border-white/10 backdrop-blur-md"
         >
           <div className="px-4 py-4 flex flex-col gap-1">
             <Link
