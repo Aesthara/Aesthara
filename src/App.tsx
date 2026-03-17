@@ -6,7 +6,9 @@ import {
   createRootRoute,
   createRoute,
   createRouter,
+  useRouterState,
 } from "@tanstack/react-router";
+import { useEffect } from "react";
 import Footer from "./components/Footer";
 import Navbar from "./components/Navbar";
 import HomePage from "./pages/HomePage";
@@ -16,9 +18,20 @@ import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 // Suppress unused Link warning - it's used by child routes
 const _Link = Link;
 
+function ScrollToTop() {
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [pathname]);
+
+  return null;
+}
+
 const rootRoute = createRootRoute({
   component: () => (
     <>
+      <ScrollToTop />
       <Navbar />
       <Outlet />
       <Footer />
