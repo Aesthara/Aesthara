@@ -923,7 +923,7 @@ export default function HomePage() {
                 <img
                   src={`/assets/Client logos/${file}`}
                   alt={file.replace(/\.(png|jpe?g)$/i, "")}
-                  className="max-h-full max-w-full object-contain"
+                  className="max-h-full max-w-full object-contain grayscale"
                 />
               </div>
             ))}
