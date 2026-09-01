@@ -1,33 +1,16 @@
 import { CheckCircle, Instagram, Linkedin, Loader2, Send } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { useState } from "react";
-import { useActor } from "../hooks/useActor";
-
-const CONTACT_API_URL =
-  import.meta.env.VITE_CONTACT_API_URL?.trim() || "/api/contact";
-
-// When running locally, the built-in /api/contact handler may not be available.
-// Fall back to the Google Apps Script webhook URL to make the contact form work
-// without needing a local server route.
-const DEFAULT_GOOGLE_APPS_SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbx5y94IbSh0Ol1WEBIPTMjIugk1gHG8AdtU6MB7dPiQYlbfCxsfMk6ajWaS5L9HMLbF/exec";
-
-const CONTACT_API_FALLBACK_URL =
-  import.meta.env.VITE_GOOGLE_APPS_SCRIPT_URL?.trim() ||
-  import.meta.env.GOOGLE_APPS_SCRIPT_URL?.trim() ||
-  DEFAULT_GOOGLE_APPS_SCRIPT_URL;
-
-function splitName(fullName: string) {
-  const trimmed = fullName.trim();
-  const [firstName, ...rest] = trimmed.split(/\s+/);
-  return {
-    firstName,
-    lastName: rest.join(" "),
-  };
-}
+import { useMemo, useState } from "react";
+import CmsRichText from "./CmsRichText";
+import { useCmsPage } from "../hooks/useCmsPage";
+import { submitCmsContact } from "../lib/cms/client";
+import { mapContactForm, mapGlobal, resolveLogoSrc } from "../lib/cms/mappers";
 
 export default function Footer() {
-  const { actor } = useActor();
+  const { data: cmsPage } = useCmsPage("home");
+  const global = useMemo(() => mapGlobal(cmsPage ?? null), [cmsPage]);
+  const formCopy = useMemo(() => mapContactForm(cmsPage ?? null), [cmsPage]);
+
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -55,59 +38,6 @@ export default function Footer() {
     });
   };
 
-  const submitToGoogle = async () => {
-    const payload = new URLSearchParams({
-      name: form.name.trim(),
-      email: form.email.trim(),
-      phone: form.phone.trim(),
-      company: form.company.trim(),
-      message: form.message.trim(),
-      source:
-        typeof window !== "undefined" ? window.location.href : "website",
-      recipients:
-        process.env.VITE_CONTACT_RECIPIENTS ||
-        process.env.CONTACT_RECIPIENTS ||
-        "kawaljeet.karir9@gmail.com,kawaljeet@aesthara.in",
-    });
-
-    const response = await fetch(CONTACT_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
-      },
-      body: payload.toString(),
-    });
-
-    const raw = await response.text();
-    let result: { ok?: boolean; error?: string } = {};
-    if (raw.trim().length > 0) {
-      try {
-        result = JSON.parse(raw) as { ok?: boolean; error?: string };
-      } catch {
-        result = { ok: false, error: `Unexpected API response: ${raw}` };
-      }
-    }
-
-    if (!response.ok) {
-      throw new Error(
-        result.error || `Contact API request failed (${response.status}).`,
-      );
-    }
-
-    if (!result.ok) {
-      throw new Error(result.error || "Contact API returned no success payload.");
-    }
-  };
-
-  const buildActorSubject = () => {
-    const payload = new URLSearchParams({
-      name: form.name.trim(),
-      phone: form.phone.trim(),
-      company: form.company.trim(),
-    });
-    return payload.toString();
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmedForm = {
@@ -119,31 +49,20 @@ export default function Footer() {
     };
 
     if (Object.values(trimmedForm).some((value) => value.length === 0)) {
-      setError("Please fill in all fields.");
+      setError(formCopy.validationError);
       return;
     }
 
     setLoading(true);
     setError("");
     try {
-      const { firstName, lastName } = splitName(trimmedForm.name);
-
-      await submitToGoogle();
-
-      if (actor) {
-        try {
-          await actor.submitContactForm(
-            firstName,
-            lastName,
-            trimmedForm.email,
-            buildActorSubject(),
-            trimmedForm.message,
-          );
-        } catch (actorError) {
-          console.warn("Canister contact submission failed", actorError);
-        }
-      }
-
+      await submitCmsContact({
+        name: trimmedForm.name,
+        email: trimmedForm.email,
+        phone: trimmedForm.phone,
+        subject: trimmedForm.company,
+        message: trimmedForm.message,
+      });
       setSuccess(true);
       resetForm();
     } catch (submitError) {
@@ -151,7 +70,7 @@ export default function Footer() {
       setError(
         submitError instanceof Error
           ? submitError.message
-          : "The form could not be submitted. Please verify the webhook setup and try again.",
+          : "The form could not be submitted. Please try again.",
       );
     } finally {
       setLoading(false);
@@ -159,12 +78,11 @@ export default function Footer() {
   };
 
   const year = new Date().getFullYear();
+  const footerLogo = resolveLogoSrc(global.logoLight);
 
   return (
     <footer id="contact" className="relative overflow-hidden bg-[#094185]">
-      {/* Background layers */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {/* Grid */}
         <svg
           className="absolute inset-0 w-full h-full opacity-10"
           aria-hidden="true"
@@ -186,198 +104,76 @@ export default function Footer() {
           </defs>
           <rect width="100%" height="100%" fill="url(#footerGrid)" />
         </svg>
-        {/* Constellation lines */}
         <svg className="absolute inset-0 w-full h-full" aria-hidden="true">
-          <line
-            x1="5%"
-            y1="10%"
-            x2="20%"
-            y2="30%"
-            stroke="rgba(255,195,46,0.15)"
-            strokeWidth="1"
-          />
-          <line
-            x1="20%"
-            y1="30%"
-            x2="35%"
-            y2="15%"
-            stroke="rgba(255,195,46,0.15)"
-            strokeWidth="1"
-          />
-          <line
-            x1="35%"
-            y1="15%"
-            x2="50%"
-            y2="40%"
-            stroke="rgba(255,195,46,0.15)"
-            strokeWidth="1"
-          />
-          <line
-            x1="50%"
-            y1="40%"
-            x2="65%"
-            y2="20%"
-            stroke="rgba(255,195,46,0.15)"
-            strokeWidth="1"
-          />
-          <line
-            x1="65%"
-            y1="20%"
-            x2="80%"
-            y2="45%"
-            stroke="rgba(255,195,46,0.15)"
-            strokeWidth="1"
-          />
-          <line
-            x1="80%"
-            y1="45%"
-            x2="95%"
-            y2="25%"
-            stroke="rgba(255,195,46,0.15)"
-            strokeWidth="1"
-          />
-          <line
-            x1="10%"
-            y1="60%"
-            x2="25%"
-            y2="80%"
-            stroke="rgba(255,195,46,0.1)"
-            strokeWidth="1"
-          />
-          <line
-            x1="25%"
-            y1="80%"
-            x2="45%"
-            y2="65%"
-            stroke="rgba(255,195,46,0.1)"
-            strokeWidth="1"
-          />
-          <line
-            x1="45%"
-            y1="65%"
-            x2="60%"
-            y2="85%"
-            stroke="rgba(255,195,46,0.1)"
-            strokeWidth="1"
-          />
-          <line
-            x1="60%"
-            y1="85%"
-            x2="75%"
-            y2="60%"
-            stroke="rgba(255,195,46,0.1)"
-            strokeWidth="1"
-          />
-          <line
-            x1="75%"
-            y1="60%"
-            x2="90%"
-            y2="75%"
-            stroke="rgba(255,195,46,0.1)"
-            strokeWidth="1"
-          />
-          <line
-            x1="5%"
-            y1="10%"
-            x2="10%"
-            y2="60%"
-            stroke="rgba(255,195,46,0.08)"
-            strokeWidth="1"
-          />
-          <line
-            x1="35%"
-            y1="15%"
-            x2="45%"
-            y2="65%"
-            stroke="rgba(255,195,46,0.08)"
-            strokeWidth="1"
-          />
-          <line
-            x1="65%"
-            y1="20%"
-            x2="75%"
-            y2="60%"
-            stroke="rgba(255,195,46,0.08)"
-            strokeWidth="1"
-          />
-          {/* Glowing dots */}
+          <line x1="5%" y1="10%" x2="20%" y2="30%" stroke="rgba(255,195,46,0.15)" strokeWidth="1" />
+          <line x1="20%" y1="30%" x2="35%" y2="15%" stroke="rgba(255,195,46,0.15)" strokeWidth="1" />
+          <line x1="35%" y1="15%" x2="50%" y2="40%" stroke="rgba(255,195,46,0.15)" strokeWidth="1" />
+          <line x1="50%" y1="40%" x2="65%" y2="20%" stroke="rgba(255,195,46,0.15)" strokeWidth="1" />
+          <line x1="65%" y1="20%" x2="80%" y2="45%" stroke="rgba(255,195,46,0.15)" strokeWidth="1" />
+          <line x1="80%" y1="45%" x2="95%" y2="25%" stroke="rgba(255,195,46,0.15)" strokeWidth="1" />
           <circle cx="5%" cy="10%" r="3" fill="rgba(255,195,46,0.4)" />
-          <circle cx="20%" cy="30%" r="2" fill="rgba(255,195,46,0.3)" />
           <circle cx="35%" cy="15%" r="3" fill="rgba(255,195,46,0.4)" />
-          <circle cx="50%" cy="40%" r="2" fill="rgba(223,159,87,0.3)" />
           <circle cx="65%" cy="20%" r="3" fill="rgba(255,195,46,0.4)" />
-          <circle cx="80%" cy="45%" r="2" fill="rgba(255,195,46,0.3)" />
-          <circle cx="95%" cy="25%" r="3" fill="rgba(223,159,87,0.4)" />
-          <circle cx="10%" cy="60%" r="2" fill="rgba(255,195,46,0.3)" />
-          <circle cx="25%" cy="80%" r="3" fill="rgba(255,195,46,0.4)" />
-          <circle cx="45%" cy="65%" r="2" fill="rgba(223,159,87,0.3)" />
-          <circle cx="60%" cy="85%" r="3" fill="rgba(255,195,46,0.4)" />
-          <circle cx="75%" cy="60%" r="2" fill="rgba(255,195,46,0.3)" />
-          <circle cx="90%" cy="75%" r="3" fill="rgba(223,159,87,0.4)" />
         </svg>
-        {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-b from-[#094185] via-[#005280]/90 to-[#094185]" />
       </div>
 
-      {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start">
-          {/* Left column */}
           <div className="order-2 lg:order-1 space-y-8">
             <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-3xl p-6 md:p-8">
               <h3 className="text-2xl sm:text-3xl font-bold text-white mb-3">
-                Ready to make your brand stand out?
+                {global.footerHeading}
               </h3>
-              <p className="text-lg text-white/80">
-                Let&apos;s turn your vision into{" "}
-                <strong className="text-[#FFC32E]">striking visuals.</strong>
-              </p>
+              <CmsRichText
+                html={global.footerSubheading}
+                className="text-lg text-white/80"
+              />
             </div>
             <div className="space-y-6">
               <img
-                src="/assets/Aesthara white.png"
-                alt="Aesthara"
+                src={footerLogo}
+                alt={global.logoAlt}
                 className="h-12 md:h-14 w-auto object-contain"
               />
               <div className="flex items-center gap-6">
                 <a
-                  href="https://www.linkedin.com/company/aesthara-cs/"
+                  href={global.linkedinUrl}
                   target="_blank"
                   rel="noreferrer"
                   className="flex items-center gap-2 text-white/70 hover:text-white transition-colors"
                 >
                   <Linkedin className="w-5 h-5" />
-                  <span>LinkedIn</span>
+                  <span>{global.linkedinLabel}</span>
                 </a>
                 <a
-                  href="https://www.instagram.com/aesthara_creative_solutions/"
+                  href={global.instagramUrl}
                   target="_blank"
                   rel="noreferrer"
                   className="flex items-center gap-2 text-white/70 hover:text-white transition-colors"
                 >
                   <Instagram className="w-5 h-5" />
-                  <span>Instagram</span>
+                  <span>{global.instagramLabel}</span>
                 </a>
               </div>
               <div className="space-y-2 text-sm">
                 <a
-                  href="mailto:kawaljeet@aesthara.in"
+                  href={`mailto:${global.email}`}
                   className="block text-white/70 hover:text-white transition-colors"
                 >
-                  kawaljeet@aesthara.in
+                  {global.email}
                 </a>
                 <a
-                  href="tel:+919819550115"
+                  href={`tel:${global.phone.replace(/\s/g, "")}`}
                   className="block text-white/70 hover:text-white transition-colors"
                 >
-                  +91 98195 50115
+                  {global.phone}
                 </a>
               </div>
-              <p className="text-white/60 text-sm">Mumbai | India</p>
+              <p className="text-white/60 text-sm">{global.location}</p>
             </div>
           </div>
 
-          {/* Right column / Form */}
           <div className="order-1 lg:order-2">
             <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-3xl p-6 md:p-8">
               {success ? (
@@ -386,22 +182,22 @@ export default function Footer() {
                   className="flex flex-col items-center justify-center text-center py-10"
                 >
                   <CheckCircle className="w-14 h-14 text-[#FFC32E] mb-4" />
-                  <h3 className="text-white text-2xl font-bold">Thank you!</h3>
-                  <p className="text-white/70 mt-2">
-                    We&apos;ll be in touch soon.
-                  </p>
+                  <h3 className="text-white text-2xl font-bold">
+                    {formCopy.successHeading}
+                  </h3>
+                  <p className="text-white/70 mt-2">{formCopy.successMessage}</p>
                   <button
                     type="button"
                     onClick={() => setSuccess(false)}
                     className="mt-6 text-[#FFC32E] underline text-sm"
                   >
-                    Send another message
+                    {formCopy.successResetLabel}
                   </button>
                 </div>
               ) : (
                 <>
                   <h4 className="text-xl font-bold text-white mb-6">
-                    Get in Touch
+                    {formCopy.formHeading}
                   </h4>
                   <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="grid sm:grid-cols-2 gap-4">
@@ -410,7 +206,7 @@ export default function Footer() {
                         value={form.name}
                         onChange={handleChange}
                         required
-                        placeholder="Name"
+                        placeholder={formCopy.placeholderName}
                         data-ocid="contact.input"
                         className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 focus:border-[#FFC32E] focus:ring-2 focus:ring-[#FFC32E]/20 transition-all outline-none text-white placeholder-white/50"
                       />
@@ -420,7 +216,7 @@ export default function Footer() {
                         value={form.email}
                         onChange={handleChange}
                         required
-                        placeholder="Email"
+                        placeholder={formCopy.placeholderEmail}
                         data-ocid="contact.input"
                         className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 focus:border-[#FFC32E] focus:ring-2 focus:ring-[#FFC32E]/20 transition-all outline-none text-white placeholder-white/50"
                       />
@@ -431,7 +227,7 @@ export default function Footer() {
                         value={form.phone}
                         onChange={handleChange}
                         required
-                        placeholder="Phone Number"
+                        placeholder={formCopy.placeholderPhone}
                         className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 focus:border-[#FFC32E] focus:ring-2 focus:ring-[#FFC32E]/20 transition-all outline-none text-white placeholder-white/50"
                       />
                       <input
@@ -439,7 +235,7 @@ export default function Footer() {
                         value={form.company}
                         onChange={handleChange}
                         required
-                        placeholder="Company"
+                        placeholder={formCopy.placeholderCompany}
                         className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 focus:border-[#FFC32E] focus:ring-2 focus:ring-[#FFC32E]/20 transition-all outline-none text-white placeholder-white/50"
                       />
                     </div>
@@ -449,7 +245,7 @@ export default function Footer() {
                       onChange={handleChange}
                       required
                       rows={4}
-                      placeholder="Tell us about your project..."
+                      placeholder={formCopy.placeholderMessage}
                       data-ocid="contact.textarea"
                       className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 focus:border-[#FFC32E] focus:ring-2 focus:ring-[#FFC32E]/20 transition-all outline-none text-white placeholder-white/50 resize-none"
                     />
@@ -472,7 +268,7 @@ export default function Footer() {
                       ) : (
                         <Send className="w-5 h-5" />
                       )}
-                      {loading ? "Sending..." : "Send Message"}
+                      {loading ? formCopy.submittingLabel : formCopy.submitLabel}
                     </button>
                   </form>
                 </>
@@ -481,14 +277,15 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Bottom bar */}
         <div className="border-t border-white/10 pt-8 mt-12 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-white/40 text-sm">Aesthara © {year}</p>
+          <p className="text-white/40 text-sm">
+            {global.copyrightName} © {year}
+          </p>
           <Link
             to="/privacy-policy"
             className="text-white/40 hover:text-white/60 text-sm transition-colors"
           >
-            Privacy Policy
+            {global.privacyLinkLabel}
           </Link>
         </div>
       </div>

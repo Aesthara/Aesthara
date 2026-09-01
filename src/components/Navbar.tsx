@@ -1,15 +1,18 @@
 import { Link, useRouter, useRouterState } from "@tanstack/react-router";
 import { ArrowUpRight, Menu, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useCmsPage } from "../hooks/useCmsPage";
+import { mapGlobal, resolveLogoSrc } from "../lib/cms/mappers";
 
 export default function Navbar() {
+  const { data: cmsPage } = useCmsPage("home");
+  const global = useMemo(() => mapGlobal(cmsPage ?? null), [cmsPage]);
+
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
   const location = useRouterState({ select: (s) => s.location });
-
-  const pathname = location.pathname.replace(/\/+$/g, "") || "/";
 
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 100);
@@ -45,6 +48,10 @@ export default function Navbar() {
     ? "px-4 py-2 text-sm font-medium transition-colors rounded-lg text-[#094185]/80 hover:text-[#094185] hover:bg-slate-100"
     : "px-4 py-2 text-sm font-medium transition-colors rounded-lg text-white/70 hover:text-white hover:bg-white/5";
 
+  const logoSrc = resolveLogoSrc(
+    useLightHeader ? global.logoDark : global.logoLight,
+  );
+
   return (
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${navBg}`}
@@ -56,19 +63,15 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16 lg:h-20">
           <Link to="/" className="flex-shrink-0">
             <img
-              src={
-                useLightHeader
-                  ? "/assets/Aesthara color.png"
-                  : "/assets/Aesthara white.png"
-              }
-              alt="Aesthara"
+              src={logoSrc}
+              alt={global.logoAlt}
               className="h-10 md:h-12 w-auto object-contain transition-all duration-300"
             />
           </Link>
 
           <div className="hidden lg:flex items-center gap-1">
             <Link to="/" data-ocid="nav.home_link" className={linkClass}>
-              Home
+              {global.navHomeLabel}
             </Link>
             <button
               type="button"
@@ -76,14 +79,14 @@ export default function Navbar() {
               data-ocid="nav.services_link"
               className={`${linkClass} cursor-pointer bg-transparent border-none`}
             >
-              Services
+              {global.navServicesLabel}
             </button>
             <Link
               to="/portfolio"
               data-ocid="nav.portfolio_link"
               className={linkClass}
             >
-              Portfolio
+              {global.navPortfolioLabel}
             </Link>
             <button
               type="button"
@@ -91,7 +94,7 @@ export default function Navbar() {
               data-ocid="nav.about_link"
               className={`${linkClass} cursor-pointer bg-transparent border-none`}
             >
-              About
+              {global.navAboutLabel}
             </button>
             <button
               type="button"
@@ -99,7 +102,7 @@ export default function Navbar() {
               data-ocid="nav.contact_link"
               className={`${linkClass} cursor-pointer bg-transparent border-none`}
             >
-              Contact
+              {global.navContactLabel}
             </button>
           </div>
 
@@ -110,7 +113,7 @@ export default function Navbar() {
               data-ocid="nav.primary_button"
               className="group relative overflow-hidden bg-gradient-to-r from-[#DF9F57] to-[#FFC32E] text-[#094185] px-5 py-2.5 rounded-full font-semibold text-sm shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 inline-flex items-center gap-1.5"
             >
-              Book a Consultation
+              {global.navCtaLabel}
               <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
             </button>
           </div>
@@ -136,35 +139,35 @@ export default function Navbar() {
               onClick={() => setMobileOpen(false)}
               className={linkClass}
             >
-              Home
+              {global.navHomeLabel}
             </Link>
             <button
               type="button"
               onClick={() => scrollTo("services")}
               className={`${linkClass} text-left cursor-pointer bg-transparent border-none`}
             >
-              Services
+              {global.navServicesLabel}
             </button>
             <Link
               to="/portfolio"
               onClick={() => setMobileOpen(false)}
               className={linkClass}
             >
-              Portfolio
+              {global.navPortfolioLabel}
             </Link>
             <button
               type="button"
               onClick={() => scrollTo("about")}
               className={`${linkClass} text-left cursor-pointer bg-transparent border-none`}
             >
-              About
+              {global.navAboutLabel}
             </button>
             <button
               type="button"
               onClick={() => scrollTo("contact")}
               className={`${linkClass} text-left cursor-pointer bg-transparent border-none`}
             >
-              Contact
+              {global.navContactLabel}
             </button>
             <div className="pt-2">
               <button
@@ -172,7 +175,7 @@ export default function Navbar() {
                 onClick={() => scrollTo("contact")}
                 className="group bg-gradient-to-r from-[#DF9F57] to-[#FFC32E] text-[#094185] font-semibold text-sm px-5 py-2.5 rounded-full w-fit inline-flex items-center gap-1.5"
               >
-                Book a Consultation
+                {global.navCtaLabel}
                 <ArrowUpRight className="w-3.5 h-3.5" />
               </button>
             </div>

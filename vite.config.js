@@ -31,17 +31,13 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      // Forward /api/contact directly to the configured Apps Script webhook.
-      // This avoids browser CORS issues and makes local dev behave like production.
-      "/api/contact": {
-        target:
-          process.env.VITE_GOOGLE_APPS_SCRIPT_URL ||
-          process.env.GOOGLE_APPS_SCRIPT_URL ||
-          "https://script.google.com/macros/s/AKfycbx5y94IbSh0Ol1WEBIPTMjIugk1gHG8AdtU6MB7dPiQYlbfCxsfMk6ajWaS5L9HMLbF/exec",
+      // Proxy CMS public API (avoids CORS from localhost → asifur.in)
+      "/api/public": {
+        target: process.env.VITE_CMS_URL || "https://asifur.in",
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/contact/, ""),
+        secure: true,
       },
-      "^/api/(?!contact(?:/|$)).*": {
+      "^/api/(?!public(?:/|$)).*": {
         target: "http://127.0.0.1:4943",
         changeOrigin: true,
       },

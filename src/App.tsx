@@ -9,6 +9,7 @@ import {
   useRouterState,
 } from "@tanstack/react-router";
 import { useEffect } from "react";
+import CmsSnippets from "./components/CmsSnippets";
 import Footer from "./components/Footer";
 import Navbar from "./components/Navbar";
 import HomePage from "./pages/HomePage";
@@ -31,6 +32,7 @@ function ScrollToTop() {
 const rootRoute = createRootRoute({
   component: () => (
     <>
+      <CmsSnippets />
       <ScrollToTop />
       <Navbar />
       <Outlet />
