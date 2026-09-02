@@ -1,6 +1,8 @@
 const CMS_BASE = (import.meta.env.VITE_CMS_URL as string | undefined)?.replace(/\/$/, "") ?? "";
 const WEBSITE_ID =
   (import.meta.env.VITE_WEBSITE_ID as string | undefined)?.trim() ?? "";
+/** Same-origin /api/public in production (Vercel rewrite); dev may use Vite proxy when empty. */
+const CMS_API_BASE = import.meta.env.PROD ? "" : CMS_BASE;
 
 export type CmsSnippet = {
   id: string;
@@ -91,10 +93,13 @@ export function cmsMediaUrl(url: string): string {
 export async function fetchCmsSite(): Promise<CmsSiteData | null> {
   if (!isCmsConfigured()) return null;
   try {
-    const res = await fetch(`${CMS_BASE}/api/public/site`, {
+    const res = await fetch(`${CMS_API_BASE}/api/public/site`, {
       headers: cmsHeaders(),
     });
     const json = (await res.json()) as { ok?: boolean; data?: CmsSiteData };
+    if (!res.ok || !json.ok) {
+      console.warn("[cms] site API returned not ok", res.status);
+    }
     return json.ok && json.data ? json.data : null;
   } catch (error) {
     console.error("[cms] site fetch failed", error);
@@ -105,13 +110,16 @@ export async function fetchCmsSite(): Promise<CmsSiteData | null> {
 export async function fetchCmsPage(slug: string): Promise<CmsPageTree | null> {
   if (!isCmsConfigured()) return null;
   try {
-    const res = await fetch(`${CMS_BASE}/api/public/pages/${slug}`, {
+    const res = await fetch(`${CMS_API_BASE}/api/public/pages/${slug}`, {
       headers: cmsHeaders(),
     });
     const json = (await res.json()) as {
       ok?: boolean;
       data?: CmsPageTree;
     };
+    if (!res.ok || !json.ok) {
+      console.warn("[cms] page API returned not ok", slug, res.status);
+    }
     return json.ok && json.data ? json.data : null;
   } catch (error) {
     console.error("[cms] page fetch failed", slug, error);
@@ -129,7 +137,7 @@ export async function submitCmsContact(payload: {
   if (!isCmsConfigured()) {
     throw new Error("CMS is not configured.");
   }
-  const res = await fetch(`${CMS_BASE}/api/public/contact`, {
+  const res = await fetch(`${CMS_API_BASE}/api/public/contact`, {
     method: "POST",
     headers: {
       ...cmsHeaders(),
