@@ -4,30 +4,46 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useRouter } from "@tanstack/react-router";
+import { useRouter, getRouteApi } from "@tanstack/react-router";
 import { ArrowUpRight, Layers, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import CmsRichText from "../components/CmsRichText";
-import { useCmsPage } from "../hooks/useCmsPage";
 import { usePageSeo } from "../hooks/usePageSeo";
 import { mapPageSeo, mapPortfolioPage, type PortfolioProject } from "../lib/cms/mappers";
 
+const portfolioRouteApi = getRouteApi("/portfolio");
+
 type Category = "All" | "Branding" | "Graphic Design" | "Presentations";
 
-export default function PortfolioPage() {
-  const { data: cmsPage, isPending } = useCmsPage("portfolio");
-  const seo = mapPageSeo("portfolio", cmsPage ?? null);
-  usePageSeo(isPending ? "" : seo.title, isPending ? undefined : seo.description);
-
-  const content = useMemo(
-    () => (isPending ? null : mapPortfolioPage(cmsPage ?? null)),
-    [cmsPage, isPending],
+function PortfolioHeroHeading({ heading }: { heading: string }) {
+  const parts = heading.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return null;
+  const last = parts[parts.length - 1]!;
+  const lead = parts.slice(0, -1).join(" ");
+  return (
+    <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6">
+      {lead ? (
+        <>
+          {lead}{" "}
+        </>
+      ) : null}
+      <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#DF9F57] to-[#FFC32E]">
+        {last}
+      </span>
+    </h1>
   );
+}
+
+export default function PortfolioPage() {
+  // Settled loader data — dynamic first; static only when page is truly null.
+  const { page: cmsPage } = portfolioRouteApi.useLoaderData();
+  const seo = mapPageSeo("portfolio", cmsPage);
+  usePageSeo(seo.title, seo.description);
+
+  const content = useMemo(() => mapPortfolioPage(cmsPage), [cmsPage]);
   const [active, setActive] = useState<Category>("All");
   const [selectedProject, setSelectedProject] = useState<PortfolioProject | null>(null);
   const router = useRouter();
-
-  if (isPending || !content) return null;
 
   const filtered =
     active === "All"
@@ -65,12 +81,7 @@ export default function PortfolioPage() {
             <Layers className="w-4 h-4" />
             {content.hero.eyebrow}
           </div>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6">
-            Work That{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#DF9F57] to-[#FFC32E]">
-              Inspires
-            </span>
-          </h1>
+          <PortfolioHeroHeading heading={content.hero.heading} />
           <p className="text-xl text-white/80 max-w-2xl mx-auto">
             {content.hero.subheading}
           </p>

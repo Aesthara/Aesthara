@@ -1,5 +1,7 @@
 import { useEffect } from "react";
-import { useCmsSite } from "../hooks/useCmsPage";
+import { getRouteApi } from "@tanstack/react-router";
+
+const rootRouteApi = getRouteApi("__root__");
 
 function injectHtml(parent: HTMLElement, html: string, position: "prepend" | "append") {
   if (!html.trim()) return;
@@ -18,11 +20,11 @@ function injectHtml(parent: HTMLElement, html: string, position: "prepend" | "ap
 }
 
 export default function CmsSnippets() {
-  const { data: site, isPending } = useCmsSite();
+  // Settled root loader site payload — never inject during loading.
+  const { site } = rootRouteApi.useLoaderData();
 
   useEffect(() => {
-    // Wait until site fetch settles — never inject from a loading placeholder.
-    if (isPending || !site?.snippets?.length) return;
+    if (!site?.snippets?.length) return;
     for (const snippet of site.snippets) {
       if (snippet.headCode) {
         injectHtml(document.head, snippet.headCode, "append");
@@ -34,7 +36,7 @@ export default function CmsSnippets() {
         injectHtml(document.body, snippet.footerCode, "append");
       }
     }
-  }, [site, isPending]);
+  }, [site]);
 
   return null;
 }

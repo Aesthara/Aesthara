@@ -1,21 +1,17 @@
 import { CheckCircle, Instagram, Linkedin, Loader2, Send } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import { Link, getRouteApi } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import CmsRichText from "./CmsRichText";
-import { useCmsPage } from "../hooks/useCmsPage";
 import { submitCmsContact } from "../lib/cms/client";
 import { mapContactForm, mapGlobal, resolveLogoSrc } from "../lib/cms/mappers";
 
+const rootRouteApi = getRouteApi("__root__");
+
 export default function Footer() {
-  const { data: cmsPage, isPending } = useCmsPage("home");
-  const global = useMemo(
-    () => (isPending ? null : mapGlobal(cmsPage ?? null)),
-    [cmsPage, isPending],
-  );
-  const formCopy = useMemo(
-    () => (isPending ? null : mapContactForm(cmsPage ?? null)),
-    [cmsPage, isPending],
-  );
+  // Settled root loader home tree — dynamic first, static only if home is null.
+  const { home } = rootRouteApi.useLoaderData();
+  const global = useMemo(() => mapGlobal(home), [home]);
+  const formCopy = useMemo(() => mapContactForm(home), [home]);
 
   const [form, setForm] = useState({
     name: "",
@@ -43,8 +39,6 @@ export default function Footer() {
       message: "",
     });
   };
-
-  if (isPending || !global || !formCopy) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

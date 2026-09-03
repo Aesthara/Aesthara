@@ -92,41 +92,50 @@ export function cmsMediaUrl(url: string): string {
 
 export async function fetchCmsSite(): Promise<CmsSiteData | null> {
   if (!isCmsConfigured()) return null;
+  const res = await fetch(`${CMS_API_BASE}/api/public/site`, {
+    headers: cmsHeaders(),
+    cache: "no-store",
+  });
+  // True miss — static fallbacks are OK.
+  if (res.status === 404) return null;
+
+  let json: { ok?: boolean; data?: CmsSiteData; error?: string };
   try {
-    const res = await fetch(`${CMS_API_BASE}/api/public/site`, {
-      headers: cmsHeaders(),
-      cache: "no-store",
-    });
-    const json = (await res.json()) as { ok?: boolean; data?: CmsSiteData };
-    if (!res.ok || !json.ok) {
-      console.warn("[cms] site API returned not ok", res.status);
-    }
-    return json.ok && json.data ? json.data : null;
-  } catch (error) {
-    console.error("[cms] site fetch failed", error);
-    return null;
+    json = (await res.json()) as typeof json;
+  } catch {
+    throw new Error(`[cms] site API returned invalid JSON (${res.status})`);
   }
+
+  if (!res.ok || !json.ok || !json.data) {
+    throw new Error(
+      `[cms] site API failed (${res.status})${json.error ? `: ${json.error}` : ""}`,
+    );
+  }
+  return json.data;
 }
 
 export async function fetchCmsPage(slug: string): Promise<CmsPageTree | null> {
   if (!isCmsConfigured()) return null;
+  const res = await fetch(`${CMS_API_BASE}/api/public/pages/${slug}`, {
+    headers: cmsHeaders(),
+    cache: "no-store",
+  });
+  // True miss — static fallbacks are OK.
+  if (res.status === 404) return null;
+
+  let json: { ok?: boolean; data?: CmsPageTree; error?: string };
   try {
-    const res = await fetch(`${CMS_API_BASE}/api/public/pages/${slug}`, {
-      headers: cmsHeaders(),
-      cache: "no-store",
-    });
-    const json = (await res.json()) as {
-      ok?: boolean;
-      data?: CmsPageTree;
-    };
-    if (!res.ok || !json.ok) {
-      console.warn("[cms] page API returned not ok", slug, res.status);
-    }
-    return json.ok && json.data ? json.data : null;
-  } catch (error) {
-    console.error("[cms] page fetch failed", slug, error);
-    return null;
+    json = (await res.json()) as typeof json;
+  } catch {
+    throw new Error(`[cms] page API returned invalid JSON (${slug}, ${res.status})`);
   }
+
+  if (!res.ok || !json.ok || !json.data) {
+    throw new Error(
+      `[cms] page API failed (${slug}, ${res.status})${json.error ? `: ${json.error}` : ""}`,
+    );
+  }
+  return json.data;
 }
 
 export async function submitCmsContact(payload: {

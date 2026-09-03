@@ -1,15 +1,16 @@
+import { getRouteApi } from "@tanstack/react-router";
 import CmsRichText from "../components/CmsRichText";
-import { useCmsPage } from "../hooks/useCmsPage";
 import { usePageSeo } from "../hooks/usePageSeo";
 import { mapPageSeo, mapPrivacyPolicy } from "../lib/cms/mappers";
 
-export default function PrivacyPolicyPage() {
-  const { data: cmsPage, isPending } = useCmsPage("privacy-policy");
-  const seo = mapPageSeo("privacy-policy", cmsPage ?? null);
-  usePageSeo(isPending ? "" : seo.title, isPending ? undefined : seo.description);
-  const policy = isPending ? null : mapPrivacyPolicy(cmsPage ?? null);
+const privacyRouteApi = getRouteApi("/privacy-policy");
 
-  if (isPending || !policy) return null;
+export default function PrivacyPolicyPage() {
+  // Settled loader data — dynamic first; static only when page is truly null.
+  const { page: cmsPage } = privacyRouteApi.useLoaderData();
+  const seo = mapPageSeo("privacy-policy", cmsPage);
+  usePageSeo(seo.title, seo.description);
+  const policy = mapPrivacyPolicy(cmsPage);
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans">

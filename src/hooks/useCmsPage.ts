@@ -1,7 +1,7 @@
 import { useQuery, type QueryClient } from "@tanstack/react-query";
 import { fetchCmsPage, fetchCmsSite, type CmsPageTree, type CmsSiteData } from "../lib/cms/client";
 
-/** Short stale window so CMS purge + reload/refocus picks up new content quickly. */
+/** Short stale window so CMS purge + focus refetch picks up new content quickly. */
 export const CMS_STALE_TIME = 30_000;
 
 export function cmsSiteQueryKey() {
@@ -17,6 +17,9 @@ export function cmsSiteQueryOptions() {
     queryKey: cmsSiteQueryKey(),
     queryFn: fetchCmsSite,
     staleTime: CMS_STALE_TIME,
+    /** Loaders own mount freshness — avoid duplicate fetch races. */
+    refetchOnMount: false as const,
+    refetchOnWindowFocus: true as const,
     retry: 1 as const,
   };
 }
@@ -26,6 +29,8 @@ export function cmsPageQueryOptions(slug: string) {
     queryKey: cmsPageQueryKey(slug),
     queryFn: () => fetchCmsPage(slug),
     staleTime: CMS_STALE_TIME,
+    refetchOnMount: false as const,
+    refetchOnWindowFocus: true as const,
     retry: 1 as const,
   };
 }

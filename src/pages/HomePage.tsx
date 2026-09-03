@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link, getRouteApi } from "@tanstack/react-router";
 import {
   ArrowUpRight,
   ChevronRight,
@@ -8,7 +8,6 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import CmsRichText from "../components/CmsRichText";
-import { useCmsPage } from "../hooks/useCmsPage";
 import { usePageSeo } from "../hooks/usePageSeo";
 import { useScrollReveal } from "../hooks/useScrollReveal";
 import { processIcon, statIcon } from "../lib/cms/icons";
@@ -25,6 +24,8 @@ import {
   mapStats,
   mapTestimonials,
 } from "../lib/cms/mappers";
+
+const homeRouteApi = getRouteApi("/");
 
 function useCountUp(target: number, duration = 1800, triggered = false) {
   const [count, setCount] = useState(0);
@@ -106,11 +107,11 @@ const floatingDots = [
 const sectionSubtitleClassName = "text-lg text-gray-600 italic";
 
 export default function HomePage() {
-  const { data: cmsPage, isPending } = useCmsPage("home");
+  // Settled loader data — dynamic first; static only when page is truly null.
+  const { page: cmsPage } = homeRouteApi.useLoaderData();
 
-  const seo = mapPageSeo("home", cmsPage ?? null);
-  // Skip applying SEO until CMS resolve finishes (avoids static title flash).
-  usePageSeo(isPending ? "" : seo.title, isPending ? undefined : seo.description);
+  const seo = mapPageSeo("home", cmsPage);
+  usePageSeo(seo.title, seo.description);
 
   const [heroLeftVisible, setHeroLeftVisible] = useState(false);
   const [heroRightVisible, setHeroRightVisible] = useState(false);
@@ -148,19 +149,16 @@ export default function HomePage() {
     return () => obs.disconnect();
   }, []);
 
-  // Loader seeds cache before paint; never map static while CMS is still loading.
-  if (isPending) return null;
-
-  const hero = mapHomeHero(cmsPage ?? null);
-  const marqueeItems = mapMarquee(cmsPage ?? null);
-  const about = mapHomeAbout(cmsPage ?? null);
-  const servicesHeader = mapServicesHeader(cmsPage ?? null);
-  const serviceBlocks = mapServiceBlocks(cmsPage ?? null);
-  const stats = mapStats(cmsPage ?? null);
-  const process = mapProcess(cmsPage ?? null);
-  const testimonials = mapTestimonials(cmsPage ?? null);
-  const clients = mapClients(cmsPage ?? null);
-  const portfolioPreview = mapPortfolioPreview(cmsPage ?? null);
+  const hero = mapHomeHero(cmsPage);
+  const marqueeItems = mapMarquee(cmsPage);
+  const about = mapHomeAbout(cmsPage);
+  const servicesHeader = mapServicesHeader(cmsPage);
+  const serviceBlocks = mapServiceBlocks(cmsPage);
+  const stats = mapStats(cmsPage);
+  const process = mapProcess(cmsPage);
+  const testimonials = mapTestimonials(cmsPage);
+  const clients = mapClients(cmsPage);
+  const portfolioPreview = mapPortfolioPreview(cmsPage);
 
   const scrollToContact = () => {
     document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
