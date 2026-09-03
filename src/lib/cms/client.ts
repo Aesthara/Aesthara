@@ -95,6 +95,7 @@ export async function fetchCmsSite(): Promise<CmsSiteData | null> {
   try {
     const res = await fetch(`${CMS_API_BASE}/api/public/site`, {
       headers: cmsHeaders(),
+      cache: "no-store",
     });
     const json = (await res.json()) as { ok?: boolean; data?: CmsSiteData };
     if (!res.ok || !json.ok) {
@@ -112,6 +113,7 @@ export async function fetchCmsPage(slug: string): Promise<CmsPageTree | null> {
   try {
     const res = await fetch(`${CMS_API_BASE}/api/public/pages/${slug}`, {
       headers: cmsHeaders(),
+      cache: "no-store",
     });
     const json = (await res.json()) as {
       ok?: boolean;

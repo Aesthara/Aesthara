@@ -18,10 +18,11 @@ function injectHtml(parent: HTMLElement, html: string, position: "prepend" | "ap
 }
 
 export default function CmsSnippets() {
-  const { data: site } = useCmsSite();
+  const { data: site, isPending } = useCmsSite();
 
   useEffect(() => {
-    if (!site?.snippets?.length) return;
+    // Wait until site fetch settles — never inject from a loading placeholder.
+    if (isPending || !site?.snippets?.length) return;
     for (const snippet of site.snippets) {
       if (snippet.headCode) {
         injectHtml(document.head, snippet.headCode, "append");
@@ -33,7 +34,7 @@ export default function CmsSnippets() {
         injectHtml(document.body, snippet.footerCode, "append");
       }
     }
-  }, [site]);
+  }, [site, isPending]);
 
   return null;
 }

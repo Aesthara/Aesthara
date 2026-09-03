@@ -5,8 +5,11 @@ import { useCmsPage } from "../hooks/useCmsPage";
 import { mapGlobal, resolveLogoSrc } from "../lib/cms/mappers";
 
 export default function Navbar() {
-  const { data: cmsPage } = useCmsPage("home");
-  const global = useMemo(() => mapGlobal(cmsPage ?? null), [cmsPage]);
+  const { data: cmsPage, isPending } = useCmsPage("home");
+  const global = useMemo(
+    () => (isPending ? null : mapGlobal(cmsPage ?? null)),
+    [cmsPage, isPending],
+  );
 
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -25,6 +28,8 @@ export default function Navbar() {
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  if (isPending || !global) return null;
 
   const scrollTo = (id: string) => {
     setMobileOpen(false);

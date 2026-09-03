@@ -4,10 +4,12 @@ import { usePageSeo } from "../hooks/usePageSeo";
 import { mapPageSeo, mapPrivacyPolicy } from "../lib/cms/mappers";
 
 export default function PrivacyPolicyPage() {
-  const { data: cmsPage } = useCmsPage("privacy-policy");
+  const { data: cmsPage, isPending } = useCmsPage("privacy-policy");
   const seo = mapPageSeo("privacy-policy", cmsPage ?? null);
-  usePageSeo(seo.title, seo.description);
-  const policy = mapPrivacyPolicy(cmsPage ?? null);
+  usePageSeo(isPending ? "" : seo.title, isPending ? undefined : seo.description);
+  const policy = isPending ? null : mapPrivacyPolicy(cmsPage ?? null);
+
+  if (isPending || !policy) return null;
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans">

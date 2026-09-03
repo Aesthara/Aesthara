@@ -7,9 +7,15 @@ import { submitCmsContact } from "../lib/cms/client";
 import { mapContactForm, mapGlobal, resolveLogoSrc } from "../lib/cms/mappers";
 
 export default function Footer() {
-  const { data: cmsPage } = useCmsPage("home");
-  const global = useMemo(() => mapGlobal(cmsPage ?? null), [cmsPage]);
-  const formCopy = useMemo(() => mapContactForm(cmsPage ?? null), [cmsPage]);
+  const { data: cmsPage, isPending } = useCmsPage("home");
+  const global = useMemo(
+    () => (isPending ? null : mapGlobal(cmsPage ?? null)),
+    [cmsPage, isPending],
+  );
+  const formCopy = useMemo(
+    () => (isPending ? null : mapContactForm(cmsPage ?? null)),
+    [cmsPage, isPending],
+  );
 
   const [form, setForm] = useState({
     name: "",
@@ -37,6 +43,8 @@ export default function Footer() {
       message: "",
     });
   };
+
+  if (isPending || !global || !formCopy) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

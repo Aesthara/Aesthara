@@ -15,14 +15,19 @@ import { mapPageSeo, mapPortfolioPage, type PortfolioProject } from "../lib/cms/
 type Category = "All" | "Branding" | "Graphic Design" | "Presentations";
 
 export default function PortfolioPage() {
-  const { data: cmsPage } = useCmsPage("portfolio");
+  const { data: cmsPage, isPending } = useCmsPage("portfolio");
   const seo = mapPageSeo("portfolio", cmsPage ?? null);
-  usePageSeo(seo.title, seo.description);
+  usePageSeo(isPending ? "" : seo.title, isPending ? undefined : seo.description);
 
-  const content = useMemo(() => mapPortfolioPage(cmsPage ?? null), [cmsPage]);
+  const content = useMemo(
+    () => (isPending ? null : mapPortfolioPage(cmsPage ?? null)),
+    [cmsPage, isPending],
+  );
   const [active, setActive] = useState<Category>("All");
   const [selectedProject, setSelectedProject] = useState<PortfolioProject | null>(null);
   const router = useRouter();
+
+  if (isPending || !content) return null;
 
   const filtered =
     active === "All"

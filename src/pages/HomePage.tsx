@@ -106,20 +106,11 @@ const floatingDots = [
 const sectionSubtitleClassName = "text-lg text-gray-600 italic";
 
 export default function HomePage() {
-  const { data: cmsPage } = useCmsPage("home");
-  const seo = mapPageSeo("home", cmsPage ?? null);
-  usePageSeo(seo.title, seo.description);
+  const { data: cmsPage, isPending } = useCmsPage("home");
 
-  const hero = mapHomeHero(cmsPage ?? null);
-  const marqueeItems = mapMarquee(cmsPage ?? null);
-  const about = mapHomeAbout(cmsPage ?? null);
-  const servicesHeader = mapServicesHeader(cmsPage ?? null);
-  const serviceBlocks = mapServiceBlocks(cmsPage ?? null);
-  const stats = mapStats(cmsPage ?? null);
-  const process = mapProcess(cmsPage ?? null);
-  const testimonials = mapTestimonials(cmsPage ?? null);
-  const clients = mapClients(cmsPage ?? null);
-  const portfolioPreview = mapPortfolioPreview(cmsPage ?? null);
+  const seo = mapPageSeo("home", cmsPage ?? null);
+  // Skip applying SEO until CMS resolve finishes (avoids static title flash).
+  usePageSeo(isPending ? "" : seo.title, isPending ? undefined : seo.description);
 
   const [heroLeftVisible, setHeroLeftVisible] = useState(false);
   const [heroRightVisible, setHeroRightVisible] = useState(false);
@@ -156,6 +147,20 @@ export default function HomePage() {
     obs.observe(el);
     return () => obs.disconnect();
   }, []);
+
+  // Loader seeds cache before paint; never map static while CMS is still loading.
+  if (isPending) return null;
+
+  const hero = mapHomeHero(cmsPage ?? null);
+  const marqueeItems = mapMarquee(cmsPage ?? null);
+  const about = mapHomeAbout(cmsPage ?? null);
+  const servicesHeader = mapServicesHeader(cmsPage ?? null);
+  const serviceBlocks = mapServiceBlocks(cmsPage ?? null);
+  const stats = mapStats(cmsPage ?? null);
+  const process = mapProcess(cmsPage ?? null);
+  const testimonials = mapTestimonials(cmsPage ?? null);
+  const clients = mapClients(cmsPage ?? null);
+  const portfolioPreview = mapPortfolioPreview(cmsPage ?? null);
 
   const scrollToContact = () => {
     document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
